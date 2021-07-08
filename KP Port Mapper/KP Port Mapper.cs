@@ -2,6 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -38,9 +41,8 @@ namespace KP_Port_Mapper
             device = await discoverer.DiscoverDeviceAsync(PortMapper.Upnp, new CancellationTokenSource(10000));
             var p = await device.GetAllMappingsAsync();
             GenerateRows();
-            var ip = await device.GetExternalIPAsync();
-
-            this.labelPublicIP.Text = $"IP Address is: {ip}";
+            this.labelPublicIP.Text = $"IP Address is: {await device.GetExternalIPAsync()}";
+            this.labelPrivateIP.Text = $"Private IP: {Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork)}";
         }
 
         private async void DataGridPortsView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
