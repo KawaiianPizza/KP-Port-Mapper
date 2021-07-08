@@ -100,7 +100,7 @@ namespace KP_Port_Mapper
             // 
             // textboxPrivatePortMin
             // 
-            this.textboxPrivatePortMin.Location = new System.Drawing.Point(116, 303);
+            this.textboxPrivatePortMin.Location = new System.Drawing.Point(116, 294);
             this.textboxPrivatePortMin.MaxLength = 5;
             this.textboxPrivatePortMin.Name = "textboxPrivatePortMin";
             this.textboxPrivatePortMin.Size = new System.Drawing.Size(55, 26);
@@ -110,7 +110,7 @@ namespace KP_Port_Mapper
             // 
             // textboxPrivatePortMax
             // 
-            this.textboxPrivatePortMax.Location = new System.Drawing.Point(197, 303);
+            this.textboxPrivatePortMax.Location = new System.Drawing.Point(197, 294);
             this.textboxPrivatePortMax.MaxLength = 5;
             this.textboxPrivatePortMax.Name = "textboxPrivatePortMax";
             this.textboxPrivatePortMax.Size = new System.Drawing.Size(55, 26);
@@ -120,7 +120,7 @@ namespace KP_Port_Mapper
             // 
             // textboxPublicPortMin
             // 
-            this.textboxPublicPortMin.Location = new System.Drawing.Point(116, 335);
+            this.textboxPublicPortMin.Location = new System.Drawing.Point(116, 326);
             this.textboxPublicPortMin.MaxLength = 5;
             this.textboxPublicPortMin.Name = "textboxPublicPortMin";
             this.textboxPublicPortMin.Size = new System.Drawing.Size(55, 26);
@@ -130,7 +130,7 @@ namespace KP_Port_Mapper
             // 
             // textboxPublicPortMax
             // 
-            this.textboxPublicPortMax.Location = new System.Drawing.Point(197, 335);
+            this.textboxPublicPortMax.Location = new System.Drawing.Point(197, 326);
             this.textboxPublicPortMax.MaxLength = 5;
             this.textboxPublicPortMax.Name = "textboxPublicPortMax";
             this.textboxPublicPortMax.Size = new System.Drawing.Size(55, 26);
@@ -140,7 +140,7 @@ namespace KP_Port_Mapper
             // 
             // textBoxDescription
             // 
-            this.textBoxDescription.Location = new System.Drawing.Point(116, 367);
+            this.textBoxDescription.Location = new System.Drawing.Point(116, 358);
             this.textBoxDescription.Name = "textBoxDescription";
             this.textBoxDescription.Size = new System.Drawing.Size(136, 26);
             this.textBoxDescription.TabIndex = 7;
@@ -149,7 +149,7 @@ namespace KP_Port_Mapper
             // 
             this.labelPrivatePorts.AutoSize = true;
             this.labelPrivatePorts.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.labelPrivatePorts.Location = new System.Drawing.Point(12, 309);
+            this.labelPrivatePorts.Location = new System.Drawing.Point(12, 300);
             this.labelPrivatePorts.Name = "labelPrivatePorts";
             this.labelPrivatePorts.Size = new System.Drawing.Size(98, 15);
             this.labelPrivatePorts.TabIndex = 8;
@@ -159,7 +159,7 @@ namespace KP_Port_Mapper
             // 
             this.labelPublicPorts.AutoSize = true;
             this.labelPublicPorts.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.labelPublicPorts.Location = new System.Drawing.Point(19, 341);
+            this.labelPublicPorts.Location = new System.Drawing.Point(19, 332);
             this.labelPublicPorts.Name = "labelPublicPorts";
             this.labelPublicPorts.Size = new System.Drawing.Size(91, 15);
             this.labelPublicPorts.TabIndex = 9;
@@ -169,7 +169,7 @@ namespace KP_Port_Mapper
             // 
             this.labelDescription.AutoSize = true;
             this.labelDescription.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.labelDescription.Location = new System.Drawing.Point(19, 373);
+            this.labelDescription.Location = new System.Drawing.Point(19, 364);
             this.labelDescription.Name = "labelDescription";
             this.labelDescription.Size = new System.Drawing.Size(91, 15);
             this.labelDescription.TabIndex = 10;
@@ -179,7 +179,7 @@ namespace KP_Port_Mapper
             // 
             this.labelPrivatePortsSeparator.AutoSize = true;
             this.labelPrivatePortsSeparator.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.labelPrivatePortsSeparator.Location = new System.Drawing.Point(177, 309);
+            this.labelPrivatePortsSeparator.Location = new System.Drawing.Point(177, 300);
             this.labelPrivatePortsSeparator.Name = "labelPrivatePortsSeparator";
             this.labelPrivatePortsSeparator.Size = new System.Drawing.Size(14, 15);
             this.labelPrivatePortsSeparator.TabIndex = 11;
@@ -189,7 +189,7 @@ namespace KP_Port_Mapper
             // 
             this.labelPublicPortsSeparator.AutoSize = true;
             this.labelPublicPortsSeparator.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.labelPublicPortsSeparator.Location = new System.Drawing.Point(177, 341);
+            this.labelPublicPortsSeparator.Location = new System.Drawing.Point(177, 332);
             this.labelPublicPortsSeparator.Name = "labelPublicPortsSeparator";
             this.labelPublicPortsSeparator.Size = new System.Drawing.Size(14, 15);
             this.labelPublicPortsSeparator.TabIndex = 12;
@@ -197,7 +197,7 @@ namespace KP_Port_Mapper
             // 
             // buttonOpenPort
             // 
-            this.buttonOpenPort.Location = new System.Drawing.Point(116, 428);
+            this.buttonOpenPort.Location = new System.Drawing.Point(116, 419);
             this.buttonOpenPort.Name = "buttonOpenPort";
             this.buttonOpenPort.Size = new System.Drawing.Size(136, 28);
             this.buttonOpenPort.TabIndex = 13;
@@ -210,7 +210,7 @@ namespace KP_Port_Mapper
             this.checkBoxTCP.AutoSize = true;
             this.checkBoxTCP.Checked = true;
             this.checkBoxTCP.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxTCP.Location = new System.Drawing.Point(116, 399);
+            this.checkBoxTCP.Location = new System.Drawing.Point(116, 390);
             this.checkBoxTCP.Name = "checkBoxTCP";
             this.checkBoxTCP.Size = new System.Drawing.Size(55, 23);
             this.checkBoxTCP.TabIndex = 14;
@@ -222,7 +222,7 @@ namespace KP_Port_Mapper
             this.checkBoxUDP.AutoSize = true;
             this.checkBoxUDP.Checked = true;
             this.checkBoxUDP.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxUDP.Location = new System.Drawing.Point(197, 399);
+            this.checkBoxUDP.Location = new System.Drawing.Point(197, 390);
             this.checkBoxUDP.Name = "checkBoxUDP";
             this.checkBoxUDP.Size = new System.Drawing.Size(55, 23);
             this.checkBoxUDP.TabIndex = 15;
@@ -233,7 +233,7 @@ namespace KP_Port_Mapper
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 19F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(560, 537);
+            this.ClientSize = new System.Drawing.Size(560, 461);
             this.Controls.Add(this.checkBoxUDP);
             this.Controls.Add(this.checkBoxTCP);
             this.Controls.Add(this.buttonOpenPort);
