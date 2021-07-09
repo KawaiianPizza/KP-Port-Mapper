@@ -50,6 +50,7 @@ namespace KP_Port_Mapper
             this.checkBoxUDP = new System.Windows.Forms.CheckBox();
             this.dataGridSuggestionView = new System.Windows.Forms.DataGridView();
             this.labelSuggestion = new System.Windows.Forms.Label();
+            this.buttonSuggestionRefresh = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridPortsView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridSuggestionView)).BeginInit();
             this.SuspendLayout();
@@ -273,17 +274,28 @@ namespace KP_Port_Mapper
             // labelSuggestion
             // 
             this.labelSuggestion.AutoSize = true;
-            this.labelSuggestion.Location = new System.Drawing.Point(312, 294);
+            this.labelSuggestion.Location = new System.Drawing.Point(234, 299);
             this.labelSuggestion.Name = "labelSuggestion";
             this.labelSuggestion.Size = new System.Drawing.Size(153, 19);
             this.labelSuggestion.TabIndex = 17;
             this.labelSuggestion.Text = "Suggested Ports:";
+            // 
+            // buttonSuggestionRefresh
+            // 
+            this.buttonSuggestionRefresh.Location = new System.Drawing.Point(459, 294);
+            this.buttonSuggestionRefresh.Name = "buttonSuggestionRefresh";
+            this.buttonSuggestionRefresh.Size = new System.Drawing.Size(89, 29);
+            this.buttonSuggestionRefresh.TabIndex = 18;
+            this.buttonSuggestionRefresh.Text = "Refresh";
+            this.buttonSuggestionRefresh.UseVisualStyleBackColor = true;
+            this.buttonSuggestionRefresh.Click += new System.EventHandler(this.ButtonSuggestionRefresh_Click);
             // 
             // formKPPortMapper
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 19F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(560, 555);
+            this.Controls.Add(this.buttonSuggestionRefresh);
             this.Controls.Add(this.labelSuggestion);
             this.Controls.Add(this.dataGridSuggestionView);
             this.Controls.Add(this.checkBoxUDP);
@@ -335,6 +347,7 @@ namespace KP_Port_Mapper
         private System.Windows.Forms.CheckBox checkBoxUDP;
         private System.Windows.Forms.DataGridView dataGridSuggestionView;
         private System.Windows.Forms.Label labelSuggestion;
+        private System.Windows.Forms.Button buttonSuggestionRefresh;
     }
 }
 

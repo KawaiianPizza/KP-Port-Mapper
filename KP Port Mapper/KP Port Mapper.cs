@@ -157,5 +157,10 @@ namespace KP_Port_Mapper
             }
             GenerateRows();
         }
+
+        private void ButtonSuggestionRefresh_Click(object sender, EventArgs e)
+        {
+            GetSuggestedPorts();
+        }
     }
 }
