@@ -1,10 +1,16 @@
 ﻿using Open.Nat;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -12,67 +18,61 @@ namespace KP_Port_Mapper
 {
     public partial class formKPPortMapper : Form
     {
+        private static readonly string[] blackList = { "msedge.exe", "NVIDIA Share.exe" };
+        private static readonly Regex reg = new(@"([TCPUD]{3})    [\[\]*:\.\d]+:(\d{2,}).+?(\d+)\r\n", RegexOptions.Compiled | RegexOptions.Multiline);
+
         public formKPPortMapper()
         {
             InitializeComponent();
         }
 
         readonly NatDiscoverer discoverer = new();
-        private BindingSource dataGridPortsViewDataSource = new();
+        private readonly BindingSource dataGridPortsViewDataSource = new();
+        private readonly BindingSource dataGridSuggestionViewDataSource = new();
 
         NatDevice device;
         private async void Form1_Load(object sender, EventArgs e)
         {
+            device = await discoverer.DiscoverDeviceAsync(PortMapper.Upnp, new CancellationTokenSource(10000));
+
             dataGridPortsView.UserDeletingRow += DataGridPortsView_UserDeletingRow;
             dataGridPortsView.Columns.AddRange(new[] {
-                new DataGridViewTextBoxColumn { DataPropertyName = "Protocol", Name = "Protocol", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, FillWeight=20, ReadOnly = true },
-                new DataGridViewTextBoxColumn { DataPropertyName = "PrivatePort", Name = "Private Port", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, FillWeight=15, ReadOnly = true },
-                new DataGridViewTextBoxColumn { DataPropertyName = "PublicPort", Name = "Public Port", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, FillWeight=15, ReadOnly = true },
-                new DataGridViewTextBoxColumn { DataPropertyName = "Description", Name = "Description", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, FillWeight=50, ReadOnly = true },
+                new DataGridViewTextBoxColumn { DataPropertyName = "Protocol", Name = "Type", Width = 42, ReadOnly = true },
+                new DataGridViewTextBoxColumn { DataPropertyName = "PrivatePort", Name = "Private", Width = 70, ReadOnly = true },
+                new DataGridViewTextBoxColumn { DataPropertyName = "PublicPort", Name = "Public", Width = 60, ReadOnly = true },
+                new DataGridViewTextBoxColumn { DataPropertyName = "Description", Name = "Description", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, ReadOnly = true },
             });
-            foreach (var obj in dataGridPortsView.Columns)
-            {
-                if (obj is not DataGridViewTextBoxColumn)
-                    return;
-                var column = obj as DataGridViewTextBoxColumn;
-                column.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            }
-            device = await discoverer.DiscoverDeviceAsync(PortMapper.Upnp, new CancellationTokenSource(10000));
-            var p = await device.GetAllMappingsAsync();
-            GenerateRows();
+            AlignColumns(dataGridPortsView.Columns);
+
+            dataGridSuggestionView.CellDoubleClick += DataGridSuggestionView_CellDoubleClick;
+            dataGridSuggestionView.Columns.AddRange(new[] {
+                new DataGridViewTextBoxColumn { DataPropertyName = "Port", Name = "Port", Width = 56, ReadOnly = true },
+                new DataGridViewTextBoxColumn { DataPropertyName = "Protocol", Name = "Type", Width = 42, ReadOnly = true },
+                new DataGridViewTextBoxColumn { DataPropertyName = "Process", Name = "Process", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, ReadOnly = true },
+                new DataGridViewTextBoxColumn { DataPropertyName = "Title", Name = "Title", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, ReadOnly = true },
+            });
+            AlignColumns(dataGridSuggestionView.Columns);
+
             this.labelPublicIP.Text = $"IP Address is: {await device.GetExternalIPAsync()}";
             this.labelPrivateIP.Text = $"Private IP: {Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork)}";
+            GenerateRows();
+            GetSuggestedPorts();
+        }
+
+        private void DataGridSuggestionView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            var dgvRow = (sender as DataGridView).Rows[e.RowIndex];
+            textboxPrivatePortMin.Text = dgvRow.Cells[0].Value.ToString();
+            textBoxDescription.Text = dgvRow.Cells[2].Value.ToString();
+            bool isTCP = dgvRow.Cells[1].Value.ToString() == "TCP";
+            checkBoxTCP.Checked = isTCP;
+            checkBoxUDP.Checked = !isTCP;
         }
 
         private async void DataGridPortsView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
         {
             var port = e.Row.DataBoundItem as IPDataObject;
             await device.DeletePortMapAsync(new Mapping(Enum.Parse<Protocol>(port.Protocol, true), port.PrivatePort, port.PublicPort, textBoxDescription.Text));
-        }
-
-        private async void GenerateRows()
-        {
-            var formattedGroupList = new List<IPDataObject>();
-            foreach (var mapping in await device.GetAllMappingsAsync())
-                formattedGroupList.Add(new IPDataObject(mapping.Protocol.ToString().ToUpper(), mapping.PrivatePort, mapping.PublicPort, mapping.Description));
-            dataGridPortsViewDataSource.DataSource = formattedGroupList;
-            dataGridPortsView.DataSource = dataGridPortsViewDataSource;
-            dataGridPortsView.Invalidate();
-        }
-        public class IPDataObject
-        {
-            public string Protocol { get; set; }
-            public int PrivatePort { get; set; }
-            public int PublicPort { get; set; }
-            public string Description { get; set; }
-            public IPDataObject(string protocol, int privatePort, int publicPort, string description = "")
-            {
-                Protocol = protocol;
-                PrivatePort = privatePort;
-                PublicPort = publicPort;
-                Description = description;
-            }
         }
 
         private void Textbox_KeyDown(object sender, KeyEventArgs e)
@@ -82,30 +82,9 @@ namespace KP_Port_Mapper
                 case Keys.Back:
                 case Keys.End:
                 case Keys.Home:
-                case Keys.Left:
-                case Keys.Up:
-                case Keys.Right:
-                case Keys.Down:
-                case Keys.D0:
-                case Keys.D1:
-                case Keys.D2:
-                case Keys.D3:
-                case Keys.D4:
-                case Keys.D5:
-                case Keys.D6:
-                case Keys.D7:
-                case Keys.D8:
-                case Keys.D9:
-                case Keys.NumPad0:
-                case Keys.NumPad1:
-                case Keys.NumPad2:
-                case Keys.NumPad3:
-                case Keys.NumPad4:
-                case Keys.NumPad5:
-                case Keys.NumPad6:
-                case Keys.NumPad7:
-                case Keys.NumPad8:
-                case Keys.NumPad9:
+                case var _ when e.KeyData >= Keys.Left && e.KeyData <= Keys.Down:
+                case var _ when e.KeyData >= Keys.D0 && e.KeyData <= Keys.D9:
+                case var _ when e.KeyData >= Keys.NumPad0 && e.KeyData <= Keys.NumPad9:
                     if ((sender as TextBox).Name == "textboxPublicPortMax")
                         break;
                     return;
@@ -117,7 +96,6 @@ namespace KP_Port_Mapper
         private void Textbox_TextChanged(object sender, EventArgs e)
         {
             var tb = sender as TextBox;
-
             switch (tb.Name)
             {
                 case "textboxPrivatePortMin":
@@ -143,9 +121,10 @@ namespace KP_Port_Mapper
 
         private void DataGridPortsView_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
+            var dgv = sender as DataGridView;
             if (e.Value is not "TCP" and not "UDP")
                 return;
-            foreach (DataGridViewCell item in dataGridPortsView.Rows[e.RowIndex].Cells)
+            foreach (DataGridViewCell item in dgv.Rows[e.RowIndex].Cells)
             {
                 var color = e.Value is "UDP" ? Color.LimeGreen : Color.Turquoise;
                 item.Style.BackColor = color;
