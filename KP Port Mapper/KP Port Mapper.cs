@@ -77,14 +77,15 @@ namespace KP_Port_Mapper
 
         private void Textbox_KeyDown(object sender, KeyEventArgs e)
         {
-            switch (e.KeyData)
+            switch (e.KeyCode)
             {
                 case Keys.Back:
                 case Keys.End:
                 case Keys.Home:
-                case var _ when e.KeyData >= Keys.Left && e.KeyData <= Keys.Down:
-                case var _ when e.KeyData >= Keys.D0 && e.KeyData <= Keys.D9:
-                case var _ when e.KeyData >= Keys.NumPad0 && e.KeyData <= Keys.NumPad9:
+                case var _ when e.KeyCode >= Keys.Left && e.KeyCode <= Keys.Down:
+                case var _ when e.KeyCode >= Keys.D0 && e.KeyCode <= Keys.D9:
+                case var _ when e.KeyCode >= Keys.NumPad0 && e.KeyCode <= Keys.NumPad9:
+                case var _ when e.KeyCode is Keys.C or Keys.V or Keys.X && e.Control:
                     if ((sender as TextBox).Name == "textboxPublicPortMax")
                         break;
                     return;
