@@ -85,7 +85,7 @@ namespace KP_Port_Mapper
                 case var _ when e.KeyCode >= Keys.Left && e.KeyCode <= Keys.Down:
                 case var _ when e.KeyCode >= Keys.D0 && e.KeyCode <= Keys.D9:
                 case var _ when e.KeyCode >= Keys.NumPad0 && e.KeyCode <= Keys.NumPad9:
-                case var _ when e.KeyCode is Keys.C or Keys.V or Keys.X && e.Control:
+                case var _ when e.KeyCode is Keys.A or Keys.C or Keys.V or Keys.X && e.Control:
                     if ((sender as TextBox).Name == "textboxPublicPortMax")
                         break;
                     return;
