@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Open.Nat;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -6,58 +7,67 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace KP_Port_Mapper
 {
-    public partial class formKPPortMapper : Form
+    public static class DataGridMethods
     {
-        private async void GenerateRows()
+        private static readonly string[] blackList = { "msedge.exe","chrome.exe","firefox.exe", "NVIDIA Share.exe", "Steam.exe" };
+
+        internal static async void GenerateRows(DataGridView dataGridPortsView, NatDevice device)
         {
             var formattedGroupList = new List<IPDataObject>();
+            Dictionary<string, IPDataObject> ports = new();
             foreach (var mapping in await device.GetAllMappingsAsync())
-                formattedGroupList.Add(new IPDataObject(mapping.Protocol.ToString().ToUpper(), mapping.PrivatePort, mapping.PublicPort, mapping.Description));
-            dataGridPortsViewDataSource.DataSource = formattedGroupList;
-            dataGridPortsView.DataSource = dataGridPortsViewDataSource;
+            {
+                var ip = new IPDataObject(mapping.Protocol.ToString().ToUpper(), mapping.PrivatePort, mapping.PublicPort, mapping.Description);
+                var privatePort = mapping.PrivatePort.ToString();
+                if (ports.ContainsKey(privatePort))
+                {
+                    ports[privatePort].Protocol = "DYN";
+                    continue;
+                }
+                formattedGroupList.Add(ip);
+                ports.Add(privatePort, ip);
+            }
+            dataGridPortsView.DataSource = new BindingSource() { DataSource = formattedGroupList };
             dataGridPortsView.Invalidate();
             dataGridPortsView.ClearSelection();
         }
-        private void GetSuggestedPorts()
+        private static readonly Regex reg = new(@"(?<Protocol>TCP(?=.+LISTENING)|UDP)    [\[\]*:\.\d]+:(?<Port>\d{2,}).+ (?<Process>\d{2,})\r\n", RegexOptions.Compiled | RegexOptions.Multiline);
+        internal static void GetSuggestedPorts(DataGridView dataGridSuggestionView)
         {
-            List<ProcessInfo> runningApps = new();
-            foreach (Process process in Process.GetProcesses())
-                if (NativeMethods.GetWindowRect(process.MainWindowHandle, out _))
+            var openPorts = reg.Matches(NetStat());
+            List<PortSuggestionDataObject> netStat = new();
+            Dictionary<string, PortSuggestionDataObject> ports = new();
+            foreach (var app in Process.GetProcesses())
+            {
+                if (!NativeMethods.GetWindowRect(app.MainWindowHandle, out _))
+                    continue;
+                var fileName = GetExecutablePathAboveVista(app.Id);
+                if (Array.IndexOf(blackList, fileName) != -1)
+                    continue;
+                foreach (var match in openPorts.Where(e => e.Groups[3].Value == app.Id.ToString()))
                 {
-                    string fileName = GetExecutablePathAboveVista(process.Id);
-                    if (Array.IndexOf(blackList, fileName) == -1)
-                        runningApps.Add(new ProcessInfo(process.Id, fileName, process.MainWindowTitle));
-                }
-
-            using Process p = Process.Start(new ProcessStartInfo("netstat.exe", "-a -n -o") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true });
-            using StreamReader stdOutput = p.StandardOutput;
-            using StreamReader stdError = p.StandardError;
-            string content = stdOutput.ReadToEnd() + stdError.ReadToEnd();
-
-            var openPorts = reg.Matches(content);
-            List<PortSuggestionDataObject> ds = new();
-
-            foreach (var item in runningApps)
-                foreach (var match in openPorts.Where(e => e.Groups[3].Value == item.ID))
-                {
-                    PortSuggestionDataObject portSuggestion = new(match.Groups[2].Value, match.Groups[1].Value, item.FileName, item.Title);
-                    if (ds.Find(e => e.Port == portSuggestion.Port && e.Protocol == portSuggestion.Protocol && e.Title == portSuggestion.Title) != null)
+                    var port = match.Groups["Port"].Value;
+                    var ps = new PortSuggestionDataObject(port, match.Groups["Protocol"].Value, fileName, app.MainWindowTitle);
+                    if (ports.ContainsKey(port))
+                    {
+                        ports[port].Protocol = "DYN";
                         continue;
-
-                    ds.Add(portSuggestion);
+                    }
+                    ports.Add(port, ps);
+                    netStat.Add(ps);
                 }
-
-            dataGridSuggestionViewDataSource.DataSource = ds;
-            dataGridSuggestionView.DataSource = dataGridSuggestionViewDataSource;
+            }
+            dataGridSuggestionView.DataSource = new BindingSource() { DataSource = netStat.OrderBy(e => e.Title) };
             dataGridSuggestionView.Invalidate();
             dataGridSuggestionView.ClearSelection();
         }
-        private static void AlignColumns(DataGridViewColumnCollection collection)
+        internal static void AlignColumns(DataGridViewColumnCollection collection)
         {
             foreach (var obj in collection)
             {
@@ -67,6 +77,13 @@ namespace KP_Port_Mapper
                 column.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             }
+        }
+        private static string NetStat()
+        {
+            using Process p = Process.Start(new ProcessStartInfo("netstat.exe", "-a -n -o") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true });
+            using StreamReader stdOutput = p.StandardOutput;
+            using StreamReader stdError = p.StandardError;
+            return stdOutput.ReadToEnd() + stdError.ReadToEnd();
         }
         private static string GetExecutablePathAboveVista(int ProcessId)
         {
