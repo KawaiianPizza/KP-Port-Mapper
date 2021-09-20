@@ -8,20 +8,19 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace KP_Port_Mapper
 {
     public static class DataGridMethods
     {
-        private static readonly string[] blackList = { "msedge.exe","chrome.exe","firefox.exe", "NVIDIA Share.exe", "Steam.exe" };
+        private static readonly string[] blackList = { "msedge.exe", "chrome.exe", "firefox.exe", "NVIDIA Share.exe", "Steam.exe" };
 
         internal static async void GenerateRows(DataGridView dataGridPortsView, NatDevice device)
         {
             var formattedGroupList = new List<IPDataObject>();
             Dictionary<string, IPDataObject> ports = new();
-            foreach (var mapping in await device.GetAllMappingsAsync())
+            foreach (Mapping mapping in await device.GetAllMappingsAsync())
             {
                 var ip = new IPDataObject(mapping.Protocol.ToString().ToUpper(), mapping.PrivatePort, mapping.PublicPort, mapping.Description);
                 var privatePort = mapping.PrivatePort.ToString();
@@ -40,17 +39,17 @@ namespace KP_Port_Mapper
         private static readonly Regex reg = new(@"(?<Protocol>TCP(?=.+LISTENING)|UDP)    [\[\]*:\.\d]+:(?<Port>\d{2,}).+ (?<Process>\d{2,})\r\n", RegexOptions.Compiled | RegexOptions.Multiline);
         internal static void GetSuggestedPorts(DataGridView dataGridSuggestionView)
         {
-            var openPorts = reg.Matches(NetStat());
+            MatchCollection openPorts = reg.Matches(NetStat());
             List<PortSuggestionDataObject> netStat = new();
             Dictionary<string, PortSuggestionDataObject> ports = new();
-            foreach (var app in Process.GetProcesses())
+            foreach (Process app in Process.GetProcesses())
             {
                 if (!NativeMethods.GetWindowRect(app.MainWindowHandle, out _))
                     continue;
                 var fileName = GetExecutablePathAboveVista(app.Id);
                 if (Array.IndexOf(blackList, fileName) != -1)
                     continue;
-                foreach (var match in openPorts.Where(e => e.Groups[3].Value == app.Id.ToString()))
+                foreach (Match match in openPorts.Where(e => e.Groups[3].Value == app.Id.ToString()))
                 {
                     var port = match.Groups["Port"].Value;
                     var ps = new PortSuggestionDataObject(port, match.Groups["Protocol"].Value, fileName, app.MainWindowTitle);
@@ -80,7 +79,7 @@ namespace KP_Port_Mapper
         }
         private static string NetStat()
         {
-            using Process p = Process.Start(new ProcessStartInfo("netstat.exe", "-a -n -o") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true });
+            using var p = Process.Start(new ProcessStartInfo("netstat.exe", "-a -n -o") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true });
             using StreamReader stdOutput = p.StandardOutput;
             using StreamReader stdError = p.StandardError;
             return stdOutput.ReadToEnd() + stdError.ReadToEnd();
@@ -94,7 +93,7 @@ namespace KP_Port_Mapper
             try
             {
                 StringBuilder buffer = new(1024);
-                int size = buffer.Capacity;
+                var size = buffer.Capacity;
                 if (NativeMethods.QueryFullProcessImageName(hprocess, 0, buffer, out size))
                     return Path.GetFileName(buffer.ToString());
             }

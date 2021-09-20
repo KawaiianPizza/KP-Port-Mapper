@@ -1,16 +1,9 @@
 ﻿using Open.Nat;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -24,11 +17,10 @@ namespace KP_Port_Mapper
             InitializeComponent();
         }
 
-        readonly NatDiscoverer discoverer = new();
-        string extIP;
-        readonly string intIP = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToString();
-
-        NatDevice device;
+        private readonly NatDiscoverer discoverer = new();
+        private string extIP;
+        private readonly string intIP = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToString();
+        private NatDevice device;
         private async void Form1_Load(object sender, EventArgs e)
         {
             device = await discoverer.DiscoverDeviceAsync(PortMapper.Upnp, new CancellationTokenSource(10000));
@@ -53,17 +45,17 @@ namespace KP_Port_Mapper
             });
             DataGridMethods.AlignColumns(dataGridSuggestionView.Columns);
 
-            this.labelPublicIP.Text = $"IP Address is: {extIP}";
-            this.labelPublicIP.DoubleClick += (s, e) => { ShowNotif($"Copied IP {extIP} to clipboard.", 3000); Clipboard.SetText(extIP); };
-            this.labelPrivateIP.Text = $"Private IP: {intIP}";
-            this.labelPrivateIP.DoubleClick += (s, e) => { ShowNotif($"Copied IP {intIP} to clipboard.", 3000); Clipboard.SetText(intIP); };
+            labelPublicIP.Text = $"IP Address is: {extIP}";
+            labelPublicIP.DoubleClick += (s, e) => { ShowNotif($"Copied IP {extIP} to clipboard.", 3000); Clipboard.SetText(extIP); };
+            labelPrivateIP.Text = $"Private IP: {intIP}";
+            labelPrivateIP.DoubleClick += (s, e) => { ShowNotif($"Copied IP {intIP} to clipboard.", 3000); Clipboard.SetText(intIP); };
             DataGridMethods.GenerateRows(dataGridPortsView, device);
             DataGridMethods.GetSuggestedPorts(dataGridSuggestionView);
         }
 
         private void DataGridPortsView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            var dgvRow = (sender as DataGridView).Rows[e.RowIndex];
+            DataGridViewRow dgvRow = (sender as DataGridView).Rows[e.RowIndex];
             var ip = dgvRow.DataBoundItem as IPDataObject;
             var text = $"{extIP}:{ip.PublicPort}";
             ShowNotif($"Copied IP {text} to clipboard.", 3000);
@@ -85,12 +77,12 @@ namespace KP_Port_Mapper
                 BackColor = Color.LimeGreen,
                 Text = text
             };
-            this.Controls.Add(notif);
-            this.Controls.SetChildIndex(notif, 0);
+            Controls.Add(notif);
+            Controls.SetChildIndex(notif, 0);
             notifShown = true;
             Task.Run(() =>
             {
-                int i = 0;
+                var i = 0;
                 for (; i < 24; i++)
                 {
                     Invoke(new MethodInvoker(() => notif.Height = i));
@@ -102,7 +94,7 @@ namespace KP_Port_Mapper
                     Invoke(new MethodInvoker(() => notif.Height = i));
                     Thread.Sleep(5);
                 }
-                this.Invoke(new MethodInvoker(() =>
+                Invoke(new MethodInvoker(() =>
                 {
                     notifShown = false;
                     Controls.Remove(notif);
@@ -113,7 +105,7 @@ namespace KP_Port_Mapper
 
         private void DataGridSuggestionView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            var dgvRow = (sender as DataGridView).Rows[e.RowIndex];
+            DataGridViewRow dgvRow = (sender as DataGridView).Rows[e.RowIndex];
             var ps = dgvRow.DataBoundItem as PortSuggestionDataObject;
             textboxPrivatePortMin.Text = ps.Port;
             textBoxDescription.Text = ps.Process;
@@ -197,21 +189,21 @@ namespace KP_Port_Mapper
         }
         private async void ButtonOpenPort_Click(object sender, EventArgs e)
         {
-            int startPort = int.Parse("0" + textboxPrivatePortMin.Text);
+            var startPort = int.Parse("0" + textboxPrivatePortMin.Text);
             if (startPort == 0)
                 return;
 
-            int startPublicPort = int.Parse("0" + textboxPublicPortMin.Text);
+            var startPublicPort = int.Parse("0" + textboxPublicPortMin.Text);
             if (startPublicPort == 0)
                 return;
 
             var span = Math.Abs(startPort - int.Parse("0" + textboxPrivatePortMax.Text));
 
-            int realCount = span * (Convert.ToInt32(checkBoxTCP.Checked) + Convert.ToInt32(checkBoxUDP.Checked));
+            var realCount = span * (Convert.ToInt32(checkBoxTCP.Checked) + Convert.ToInt32(checkBoxUDP.Checked));
             if (realCount > 10 && MessageBox.Show($"Are you sure you want to open {realCount} ports?") != DialogResult.Yes)
                 return;
 
-            for (int i = 0; i <= span; i++)
+            for (var i = 0; i <= span; i++)
             {
                 if (checkBoxTCP.Checked)
                     await device.CreatePortMapAsync(new Mapping(Protocol.Tcp, startPort + i, startPublicPort + i, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
