@@ -1,7 +1,7 @@
 ﻿
 namespace KP_Port_Mapper
 {
-    partial class formKPPortMapper
+    partial class FormKPPortMapper
     {
         /// <summary>
         ///  Required designer variable.
