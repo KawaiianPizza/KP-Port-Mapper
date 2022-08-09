@@ -1,4 +1,6 @@
 ﻿
+using System.Windows.Forms;
+
 namespace KP_Port_Mapper
 {
     partial class FormKPPortMapper
@@ -50,7 +52,7 @@ namespace KP_Port_Mapper
             this.checkBoxUDP = new System.Windows.Forms.CheckBox();
             this.dataGridSuggestionView = new System.Windows.Forms.DataGridView();
             this.labelSuggestion = new System.Windows.Forms.Label();
-            this.buttonSuggestionRefresh = new System.Windows.Forms.Button();
+            this.hideApplicationButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridPortsView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridSuggestionView)).BeginInit();
             this.SuspendLayout();
@@ -111,7 +113,9 @@ namespace KP_Port_Mapper
             this.dataGridPortsView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridPortsView.Size = new System.Drawing.Size(536, 222);
             this.dataGridPortsView.TabIndex = 1;
+            this.dataGridPortsView.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridPortsView_CellDoubleClick);
             this.dataGridPortsView.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.DataGridPortsView_CellFormatting);
+            this.dataGridPortsView.UserDeletingRow += new System.Windows.Forms.DataGridViewRowCancelEventHandler(this.DataGridPortsView_UserDeletingRow);
             // 
             // labelPrivateIP
             // 
@@ -270,6 +274,7 @@ namespace KP_Port_Mapper
             this.dataGridSuggestionView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridSuggestionView.Size = new System.Drawing.Size(316, 217);
             this.dataGridSuggestionView.TabIndex = 16;
+            this.dataGridSuggestionView.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridSuggestionView_CellDoubleClick);
             // 
             // labelSuggestion
             // 
@@ -280,22 +285,22 @@ namespace KP_Port_Mapper
             this.labelSuggestion.TabIndex = 17;
             this.labelSuggestion.Text = "Suggested Ports:";
             // 
-            // buttonSuggestionRefresh
+            // hideApplicationButton
             // 
-            this.buttonSuggestionRefresh.Location = new System.Drawing.Point(459, 294);
-            this.buttonSuggestionRefresh.Name = "buttonSuggestionRefresh";
-            this.buttonSuggestionRefresh.Size = new System.Drawing.Size(89, 29);
-            this.buttonSuggestionRefresh.TabIndex = 18;
-            this.buttonSuggestionRefresh.Text = "Refresh";
-            this.buttonSuggestionRefresh.UseVisualStyleBackColor = true;
-            this.buttonSuggestionRefresh.Click += new System.EventHandler(this.ButtonSuggestionRefresh_Click);
+            this.hideApplicationButton.Location = new System.Drawing.Point(402, 294);
+            this.hideApplicationButton.Name = "hideApplicationButton";
+            this.hideApplicationButton.Size = new System.Drawing.Size(146, 28);
+            this.hideApplicationButton.TabIndex = 18;
+            this.hideApplicationButton.Text = "Add Port";
+            this.hideApplicationButton.UseVisualStyleBackColor = true;
+            this.hideApplicationButton.Visible = false;
             // 
-            // formKPPortMapper
+            // FormKPPortMapper
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 19F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(560, 555);
-            this.Controls.Add(this.buttonSuggestionRefresh);
+            this.Controls.Add(this.hideApplicationButton);
             this.Controls.Add(this.labelSuggestion);
             this.Controls.Add(this.dataGridSuggestionView);
             this.Controls.Add(this.checkBoxUDP);
@@ -317,7 +322,7 @@ namespace KP_Port_Mapper
             this.Font = new System.Drawing.Font("Consolas", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Margin = new System.Windows.Forms.Padding(4);
-            this.Name = "formKPPortMapper";
+            this.Name = "FormKPPortMapper";
             this.Text = "KP Port Mapper";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridPortsView)).EndInit();
@@ -347,7 +352,7 @@ namespace KP_Port_Mapper
         private System.Windows.Forms.CheckBox checkBoxUDP;
         private System.Windows.Forms.DataGridView dataGridSuggestionView;
         private System.Windows.Forms.Label labelSuggestion;
-        private System.Windows.Forms.Button buttonSuggestionRefresh;
+        private Button hideApplicationButton;
     }
 }
 

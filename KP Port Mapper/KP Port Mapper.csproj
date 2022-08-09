@@ -5,7 +5,10 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <RootNamespace>KP_Port_Mapper</RootNamespace>
     <UseWindowsForms>true</UseWindowsForms>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
+    <DebugType>full</DebugType>
+    <SignAssembly>False</SignAssembly>
+    <StartupObject>KP_Port_Mapper.Program</StartupObject>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

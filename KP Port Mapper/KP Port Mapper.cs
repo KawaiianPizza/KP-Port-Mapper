@@ -1,5 +1,6 @@
 ﻿using Open.Nat;
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Net;
@@ -13,6 +14,8 @@ public partial class FormKPPortMapper : Form
 {
     public FormKPPortMapper()
     {
+        this.SetStyle(ControlStyles.DoubleBuffer | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true);
+        this.UpdateStyles();
         InitializeComponent();
     }
 
@@ -24,32 +27,35 @@ public partial class FormKPPortMapper : Form
     {
         device = await discoverer.DiscoverDeviceAsync(PortMapper.Upnp, new CancellationTokenSource(10000));
         extIP = (await device.GetExternalIPAsync()).ToString();
-
-        dataGridPortsView.UserDeletingRow += DataGridPortsView_UserDeletingRow;
-        dataGridPortsView.CellDoubleClick += DataGridPortsView_CellDoubleClick;
         dataGridPortsView.Columns.AddRange(new[] {
             new DataGridViewTextBoxColumn { DataPropertyName = "Protocol", Name = "Type", Width = 42, ReadOnly = true },
             new DataGridViewTextBoxColumn { DataPropertyName = "PrivatePort", Name = "Private", Width = 70, ReadOnly = true },
             new DataGridViewTextBoxColumn { DataPropertyName = "PublicPort", Name = "Public", Width = 60, ReadOnly = true },
-            new DataGridViewTextBoxColumn { DataPropertyName = "Description", Name = "Description", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, ReadOnly = true },
-        });
+            new DataGridViewTextBoxColumn { DataPropertyName = "Description", Name = "Description", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, ReadOnly = true }
+            });
         DataGridMethods.AlignColumns(dataGridPortsView.Columns);
-
-        dataGridSuggestionView.CellDoubleClick += DataGridSuggestionView_CellDoubleClick;
         dataGridSuggestionView.Columns.AddRange(new[] {
             new DataGridViewTextBoxColumn { DataPropertyName = "Port", Name = "Port", Width = 56, ReadOnly = true },
             new DataGridViewTextBoxColumn { DataPropertyName = "Protocol", Name = "Type", Width = 42, ReadOnly = true },
             new DataGridViewTextBoxColumn { DataPropertyName = "Process", Name = "Process", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, ReadOnly = true },
-            new DataGridViewTextBoxColumn { DataPropertyName = "Title", Name = "Title", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, ReadOnly = true },
-        });
+            new DataGridViewTextBoxColumn { DataPropertyName = "Title", Name = "Title", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, ReadOnly = true }
+            });
         DataGridMethods.AlignColumns(dataGridSuggestionView.Columns);
-
         labelPublicIP.Text = $"IP Address is: {extIP}";
         labelPublicIP.DoubleClick += (s, e) => { ShowNotif($"Copied IP {extIP} to clipboard.", 3000); Clipboard.SetText(extIP); };
         labelPrivateIP.Text = $"Private IP: {intIP}";
         labelPrivateIP.DoubleClick += (s, e) => { ShowNotif($"Copied IP {intIP} to clipboard.", 3000); Clipboard.SetText(intIP); };
-        DataGridMethods.GenerateRows(dataGridPortsView, device);
-        DataGridMethods.GetSuggestedPorts(dataGridSuggestionView);
+        BackgroundWorker worker = new();
+        worker.DoWork += async (s, e) =>
+        {
+            while (true)
+            {
+                DataGridMethods.GenerateRows(dataGridPortsView, device);
+                DataGridMethods.GetSuggestedPorts(dataGridSuggestionView);
+                await Task.Delay(2500);
+            }
+        };
+        worker.RunWorkerAsync();
     }
 
     private void DataGridPortsView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
@@ -69,7 +75,7 @@ public partial class FormKPPortMapper : Form
             return;
         }
         int width = (int)(Width * 0.75);
-        Label notif = new Label
+        Label notif = new()
         {
             Width = width,
             Location = new Point((Width - width) / 2, 15),
@@ -206,9 +212,17 @@ public partial class FormKPPortMapper : Form
         for (int i = 0; i <= span; i++)
         {
             if (checkBoxTCP.Checked)
-                await device.CreatePortMapAsync(new Mapping(Protocol.Tcp, startPort + i, startPublicPort + i, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
+                try
+                {
+                    await device.CreatePortMapAsync(new Mapping(Protocol.Tcp, startPort + i, startPublicPort + i, int.MaxValue, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
+                }
+                catch { }
             if (checkBoxUDP.Checked)
-                await device.CreatePortMapAsync(new Mapping(Protocol.Udp, startPort + i, startPublicPort + i, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
+                try
+                {
+                    await device.CreatePortMapAsync(new Mapping(Protocol.Udp, startPort + i, startPublicPort + i, int.MaxValue, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
+                }
+                catch { }
         }
         DataGridMethods.GenerateRows(dataGridPortsView, device);
     }
@@ -216,5 +230,6 @@ public partial class FormKPPortMapper : Form
     private void ButtonSuggestionRefresh_Click(object sender, EventArgs e)
     {
         DataGridMethods.GenerateRows(dataGridPortsView, device);
+        DataGridMethods.GetSuggestedPorts(dataGridSuggestionView);
     }
 }
