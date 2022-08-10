@@ -158,8 +158,7 @@ public partial class FormKPPortMapper : Form
         if (int.Parse("0" + tb.Text) > ushort.MaxValue)
         {
             int s = tb.SelectionStart;
-            tb.PasswordChar = ' ';
-            tb.Text = ushort.MaxValue.ToString();
+            ChangePort(tb, ushort.MaxValue.ToString());
             tb.SelectionStart = s;
         }
         int span = Math.Abs(int.Parse("0" + textboxPrivatePortMin.Text) - int.Parse("0" + textboxPrivatePortMax.Text));
@@ -167,19 +166,23 @@ public partial class FormKPPortMapper : Form
         {
             case "textboxPrivatePortMin":
                 foreach (TextBox t in new TextBox[] { textboxPrivatePortMax, textboxPublicPortMin, textboxPublicPortMax })
-                    t.PasswordChar = ' ';
-                textboxPrivatePortMax.Text = textboxPublicPortMin.Text = textboxPublicPortMax.Text = textboxPrivatePortMin.Text;
+                    ChangePort(t, tb.Text);
                 return;
             case "textboxPrivatePortMax":
             case "textboxPublicPortMin":
-                textboxPublicPortMax.PasswordChar = ' ';
-                textboxPublicPortMax.Text = (int.Parse("0" + textboxPublicPortMin.Text) + span).ToString();
+                ChangePort(textboxPublicPortMax, (int.Parse("0" + textboxPublicPortMin.Text) + span).ToString());
                 break;
             case "textboxPublicPortMax":
-                textboxPublicPortMin.PasswordChar = ' ';
-                textboxPublicPortMin.Text = (int.Parse("0" + textboxPublicPortMax.Text) - span).ToString();
+                ChangePort(textboxPublicPortMin, (int.Parse("0" + textboxPublicPortMax.Text) - span).ToString());
                 return;
         }
+    }
+    private static void ChangePort(TextBox textBox, string text)
+    {
+        if (textBox.Text == text)
+            return;
+        textBox.PasswordChar = ' ';
+        textBox.Text = text;
     }
 
     private void DataGridPortsView_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
@@ -232,7 +235,7 @@ public partial class FormKPPortMapper : Form
             }
             catch
             {
-                ShowNotif($"Public port: {startPublicPort + i} already mapped!",3000,true);
+                ShowNotif($"Public port: {startPublicPort + i} already mapped!", 3000, true);
             }
         }
         DataGridMethods.GenerateRows(dataGridPortsView, device);
