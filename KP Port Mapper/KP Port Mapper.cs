@@ -14,8 +14,8 @@ public partial class FormKPPortMapper : Form
 {
     public FormKPPortMapper()
     {
-        this.SetStyle(ControlStyles.DoubleBuffer | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true);
-        this.UpdateStyles();
+        SetStyle(ControlStyles.DoubleBuffer | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true);
+        UpdateStyles();
         InitializeComponent();
     }
 
@@ -67,7 +67,7 @@ public partial class FormKPPortMapper : Form
         Clipboard.SetText(text);
     }
     private bool notifShown = false;
-    private void ShowNotif(string text, int duration)
+    private void ShowNotif(string text, int duration, bool error = false)
     {
         if (notifShown)
         {
@@ -79,7 +79,7 @@ public partial class FormKPPortMapper : Form
         {
             Width = width,
             Location = new Point((Width - width) / 2, 15),
-            BackColor = Color.LimeGreen,
+            BackColor = error ? Color.Red : Color.LimeGreen,
             Text = text
         };
         Controls.Add(notif);
@@ -141,8 +141,6 @@ public partial class FormKPPortMapper : Form
             case var _ when e.KeyCode >= Keys.D0 && e.KeyCode <= Keys.D9:
             case var _ when e.KeyCode >= Keys.NumPad0 && e.KeyCode <= Keys.NumPad9:
             case var _ when e.KeyCode is Keys.A or Keys.C or Keys.V or Keys.X && e.Control:
-                if ((sender as TextBox).Name == "textboxPublicPortMax")
-                    break;
                 return;
         }
         e.Handled = true;
@@ -152,27 +150,36 @@ public partial class FormKPPortMapper : Form
     private void Textbox_TextChanged(object sender, EventArgs e)
     {
         TextBox tb = sender as TextBox;
+        if (tb.PasswordChar == ' ')
+        {
+            tb.PasswordChar = '\0';
+            return;
+        }
+        if (int.Parse("0" + tb.Text) > ushort.MaxValue)
+        {
+            int s = tb.SelectionStart;
+            tb.PasswordChar = ' ';
+            tb.Text = ushort.MaxValue.ToString();
+            tb.SelectionStart = s;
+        }
+        int span = Math.Abs(int.Parse("0" + textboxPrivatePortMin.Text) - int.Parse("0" + textboxPrivatePortMax.Text));
         switch (tb.Name)
         {
             case "textboxPrivatePortMin":
-                if (int.Parse("0" + tb.Text) > ushort.MaxValue)
-                    tb.Text = ushort.MaxValue.ToString();
+                foreach (TextBox t in new TextBox[] { textboxPrivatePortMax, textboxPublicPortMin, textboxPublicPortMax })
+                    t.PasswordChar = ' ';
                 textboxPrivatePortMax.Text = textboxPublicPortMin.Text = textboxPublicPortMax.Text = textboxPrivatePortMin.Text;
                 return;
             case "textboxPrivatePortMax":
-                textboxPublicPortMax.Text = textboxPrivatePortMax.Text;
-                break;
             case "textboxPublicPortMin":
+                textboxPublicPortMax.PasswordChar = ' ';
+                textboxPublicPortMax.Text = (int.Parse("0" + textboxPublicPortMin.Text) + span).ToString();
                 break;
             case "textboxPublicPortMax":
-                if (int.Parse("0" + tb.Text) > ushort.MaxValue)
-                    tb.Text = ushort.MaxValue.ToString();
+                textboxPublicPortMin.PasswordChar = ' ';
+                textboxPublicPortMin.Text = (int.Parse("0" + textboxPublicPortMax.Text) - span).ToString();
                 return;
         }
-        if (int.Parse("0" + tb.Text) > ushort.MaxValue)
-            tb.Text = ushort.MaxValue.ToString();
-        int span = Math.Abs(int.Parse("0" + textboxPrivatePortMin.Text) - int.Parse("0" + textboxPrivatePortMax.Text));
-        textboxPublicPortMax.Text = (int.Parse("0" + textboxPublicPortMin.Text) + span).ToString();
     }
 
     private void DataGridPortsView_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
@@ -195,7 +202,7 @@ public partial class FormKPPortMapper : Form
     }
     private async void ButtonOpenPort_Click(object sender, EventArgs e)
     {
-        int startPort = int.Parse("0" + textboxPrivatePortMin.Text);
+        int startPort = Math.Min(int.Parse("0" + textboxPrivatePortMin.Text), int.Parse("0" + textboxPrivatePortMax.Text));
         if (startPort == 0)
             return;
 
@@ -203,7 +210,7 @@ public partial class FormKPPortMapper : Form
         if (startPublicPort == 0)
             return;
 
-        int span = Math.Abs(startPort - int.Parse("0" + textboxPrivatePortMax.Text));
+        int span = Math.Abs(startPort - Math.Max(int.Parse("0" + textboxPrivatePortMin.Text), int.Parse("0" + textboxPrivatePortMax.Text)));
 
         int realCount = span * (Convert.ToInt32(checkBoxTCP.Checked) + Convert.ToInt32(checkBoxUDP.Checked));
         if (realCount > 10 && MessageBox.Show($"Are you sure you want to open {realCount} ports?") != DialogResult.Yes)
@@ -211,18 +218,22 @@ public partial class FormKPPortMapper : Form
 
         for (int i = 0; i <= span; i++)
         {
-            if (checkBoxTCP.Checked)
-                try
+            try
+            {
+                if (await device.GetSpecificMappingAsync(Protocol.Tcp, startPort + i) != null)
                 {
-                    await device.CreatePortMapAsync(new Mapping(Protocol.Tcp, startPort + i, startPublicPort + i, int.MaxValue, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
+                    ShowNotif($"Private port: {startPublicPort + i} already mapped!", 3000, true);
+                    continue;
                 }
-                catch { }
-            if (checkBoxUDP.Checked)
-                try
-                {
-                    await device.CreatePortMapAsync(new Mapping(Protocol.Udp, startPort + i, startPublicPort + i, int.MaxValue, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
-                }
-                catch { }
+                if (checkBoxTCP.Checked)
+                    await device.CreatePortMapAsync(new Mapping(Protocol.Tcp, startPort + i, startPublicPort + i, int.MaxValue - 1, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
+                if (checkBoxUDP.Checked)
+                    await device.CreatePortMapAsync(new Mapping(Protocol.Udp, startPort + i, startPublicPort + i, int.MaxValue - 1, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
+            }
+            catch
+            {
+                ShowNotif($"Public port: {startPublicPort + i} already mapped!",3000,true);
+            }
         }
         DataGridMethods.GenerateRows(dataGridPortsView, device);
     }
