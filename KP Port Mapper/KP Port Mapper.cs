@@ -223,15 +223,24 @@ public partial class FormKPPortMapper : Form
         {
             try
             {
-                if (await device.GetSpecificMappingAsync(Protocol.Tcp, startPort + i) != null)
-                {
-                    ShowNotif($"Private port: {startPublicPort + i} already mapped!", 3000, true);
-                    continue;
-                }
                 if (checkBoxTCP.Checked)
+                {
+                    if (await device.GetSpecificMappingAsync(Protocol.Tcp, startPort + i) != null)
+                    {
+                        ShowNotif($"Private TCP port: {startPublicPort + i} already mapped!", 3000, true);
+                        continue;
+                    }
                     await device.CreatePortMapAsync(new Mapping(Protocol.Tcp, startPort + i, startPublicPort + i, int.MaxValue - 1, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
+                }
                 if (checkBoxUDP.Checked)
+                {
+                    if (await device.GetSpecificMappingAsync(Protocol.Udp, startPort + i) != null)
+                    {
+                        ShowNotif($"Private UDP port: {startPublicPort + i} already mapped!", 3000, true);
+                        continue;
+                    }
                     await device.CreatePortMapAsync(new Mapping(Protocol.Udp, startPort + i, startPublicPort + i, int.MaxValue - 1, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
+                }
             }
             catch
             {
