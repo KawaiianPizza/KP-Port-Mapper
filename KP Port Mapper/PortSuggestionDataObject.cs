@@ -15,4 +15,6 @@ internal class PortSuggestionDataObject
         Process = process;
         Title = title;
     }
+    public static bool operator ==(PortSuggestionDataObject o1, PortSuggestionDataObject o2) => o1.Port == o2.Port && o1.Process == o2.Process && o1.Protocol == o2.Protocol && o1.Title == o2.Title;
+    public static bool operator !=(PortSuggestionDataObject o1, PortSuggestionDataObject o2) => !(o1 == o2);
 }

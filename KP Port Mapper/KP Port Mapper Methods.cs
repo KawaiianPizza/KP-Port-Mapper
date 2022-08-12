@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace KP_Port_Mapper;
@@ -16,29 +17,36 @@ public static class DataGridMethods
     private static readonly string[] blackList = { "msedge.exe", "chrome.exe", "firefox.exe", "NVIDIA Share.exe", "steam.exe" };
 
     private static readonly BindingSource openPorts = new() { DataSource = new List<IPDataObject>() };
-    internal static async void GenerateRows(DataGridView dataGridPortsView, NatDevice device)
+    private static Task refresh = null;
+    internal static void GenerateRows(DataGridView dataGridPortsView, NatDevice device)
     {
-        Dictionary<string, IPDataObject> ports = new();
-        foreach (Mapping mapping in await device.GetAllMappingsAsync())
+        if (refresh != null && !refresh.IsCompleted)
+            return;
+        refresh = Task.Run(async () =>
         {
-            IPDataObject ip = new(mapping.Protocol.ToString().ToUpper(), mapping.PrivatePort, mapping.PublicPort, mapping.Description);
-            string privatePort = mapping.PrivatePort.ToString();
-            if (ports.ContainsKey(privatePort))
+            Dictionary<string, IPDataObject> ports = new();
+            IEnumerable<Mapping> mappings = await device.GetAllMappingsAsync();
+            foreach (Mapping mapping in mappings)
             {
-                ports[privatePort].Protocol = "DYN";
-                continue;
+                IPDataObject ip = new(mapping.Protocol.ToString().ToUpper(), mapping.PrivatePort, mapping.PublicPort, mapping.Description);
+                string privatePort = mapping.PrivatePort.ToString();
+                if (ports.ContainsKey(privatePort))
+                {
+                    ports[privatePort].Protocol = "DYN";
+                    continue;
+                }
+                ports.Add(privatePort, ip);
             }
-            ports.Add(privatePort, ip);
-        }
-        foreach (IPDataObject item in new List<IPDataObject>((List<IPDataObject>)openPorts.DataSource))
-            if (!ports.Values.Any(e => e.Protocol == item.Protocol && e.PrivatePort == item.PrivatePort && e.PublicPort == item.PublicPort))
-                dataGridPortsView.Invoke(() => openPorts.Remove(item));
-        foreach (IPDataObject item in ports.Values)
-            if (!((List<IPDataObject>)openPorts.DataSource).Any(e => e.Protocol == item.Protocol && e.PrivatePort == item.PrivatePort && e.PublicPort == item.PublicPort))
-                dataGridPortsView.Invoke(() => openPorts.Add(item));
-        if (dataGridPortsView.DataSource == null)
-            dataGridPortsView.Invoke(() => dataGridPortsView.DataSource = openPorts);
-        ports.Clear();
+            foreach (IPDataObject item in new List<IPDataObject>((List<IPDataObject>)openPorts.DataSource))
+                if (!ports.Values.Any(e => e == item))
+                    dataGridPortsView.Invoke(() => openPorts.Remove(item));
+            foreach (IPDataObject item in ports.Values)
+                if (!((List<IPDataObject>)openPorts.DataSource).Any(e => e == item))
+                    dataGridPortsView.Invoke(() => openPorts.Add(item));
+            if (dataGridPortsView.DataSource == null)
+                dataGridPortsView.Invoke(() => dataGridPortsView.DataSource = openPorts);
+            ports.Clear();
+        });
     }
 
     private static readonly BindingSource suggestedPorts = new() { DataSource = new List<PortSuggestionDataObject>() };
@@ -67,10 +75,10 @@ public static class DataGridMethods
             }
         }
         foreach (PortSuggestionDataObject item in new List<PortSuggestionDataObject>((List<PortSuggestionDataObject>)suggestedPorts.DataSource))
-            if (!ports.Values.Any(e => e.Protocol == item.Protocol && e.Port == item.Port && e.Process == item.Process))
+            if (!ports.Values.Any(e =>e == item))
                 dataGridSuggestionView.Invoke(() => suggestedPorts.Remove(item));
         foreach (PortSuggestionDataObject item in ports.Values)
-            if (!((List<PortSuggestionDataObject>)suggestedPorts.DataSource).Any(e => e.Protocol == item.Protocol && e.Port == item.Port && e.Process == item.Process))
+            if (!((List<PortSuggestionDataObject>)suggestedPorts.DataSource).Any(e =>e == item))
                 dataGridSuggestionView.Invoke(() => suggestedPorts.Add(item));
 
         if (dataGridSuggestionView.DataSource == null)

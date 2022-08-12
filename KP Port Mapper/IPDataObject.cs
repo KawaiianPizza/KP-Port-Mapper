@@ -12,4 +12,6 @@ public class IPDataObject
         PublicPort = publicPort;
         Description = description;
     }
+    public static bool operator ==(IPDataObject o1, IPDataObject o2) => o1.PrivatePort == o2.PrivatePort && o1.PublicPort == o2.PrivatePort && o1.Protocol == o2.Protocol && o1.Description == o2.Description;
+    public static bool operator !=(IPDataObject o1, IPDataObject o2) => !(o1 == o2);
 }

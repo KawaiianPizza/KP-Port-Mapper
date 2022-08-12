@@ -6,7 +6,7 @@
     <RootNamespace>KP_Port_Mapper</RootNamespace>
     <UseWindowsForms>true</UseWindowsForms>
     <Version>1.3.2</Version>
-    <DebugType>none</DebugType>
+    <DebugType>full</DebugType>
     <SignAssembly>False</SignAssembly>
     <StartupObject>KP_Port_Mapper.Program</StartupObject>
   </PropertyGroup>
