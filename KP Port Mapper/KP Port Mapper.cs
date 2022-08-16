@@ -25,7 +25,14 @@ public partial class FormKPPortMapper : Form
     private NatDevice device;
     private async void Form1_Load(object sender, EventArgs e)
     {
-        device = await discoverer.DiscoverDeviceAsync(PortMapper.Upnp, new CancellationTokenSource(10000));
+        try
+        {
+            device = await discoverer.DiscoverDeviceAsync(PortMapper.Upnp, new CancellationTokenSource(10000));
+        }
+        catch (NatDeviceNotFoundException ex)
+        {
+            MessageBox.Show(ex.Message);
+        }
         extIP = (await device.GetExternalIPAsync()).ToString();
         dataGridPortsView.Columns.AddRange(new[] {
             new DataGridViewTextBoxColumn { DataPropertyName = "Protocol", Name = "Type", Width = 42, ReadOnly = true },
@@ -226,19 +233,13 @@ public partial class FormKPPortMapper : Form
                 if (checkBoxTCP.Checked)
                 {
                     if (await device.GetSpecificMappingAsync(Protocol.Tcp, startPort + i) != null)
-                    {
                         ShowNotif($"Private TCP port: {startPublicPort + i} already mapped!", 3000, true);
-                        continue;
-                    }
                     await device.CreatePortMapAsync(new Mapping(Protocol.Tcp, startPort + i, startPublicPort + i, int.MaxValue - 1, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
                 }
                 if (checkBoxUDP.Checked)
                 {
                     if (await device.GetSpecificMappingAsync(Protocol.Udp, startPort + i) != null)
-                    {
                         ShowNotif($"Private UDP port: {startPublicPort + i} already mapped!", 3000, true);
-                        continue;
-                    }
                     await device.CreatePortMapAsync(new Mapping(Protocol.Udp, startPort + i, startPublicPort + i, int.MaxValue - 1, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
                 }
             }

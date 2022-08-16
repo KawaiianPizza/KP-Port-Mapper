@@ -75,10 +75,10 @@ public static class DataGridMethods
             }
         }
         foreach (PortSuggestionDataObject item in new List<PortSuggestionDataObject>((List<PortSuggestionDataObject>)suggestedPorts.DataSource))
-            if (!ports.Values.Any(e =>e == item))
+            if (!ports.Values.Any(e => e == item))
                 dataGridSuggestionView.Invoke(() => suggestedPorts.Remove(item));
         foreach (PortSuggestionDataObject item in ports.Values)
-            if (!((List<PortSuggestionDataObject>)suggestedPorts.DataSource).Any(e =>e == item))
+            if (!((List<PortSuggestionDataObject>)suggestedPorts.DataSource).Any(e => e == item))
                 dataGridSuggestionView.Invoke(() => suggestedPorts.Add(item));
 
         if (dataGridSuggestionView.DataSource == null)
