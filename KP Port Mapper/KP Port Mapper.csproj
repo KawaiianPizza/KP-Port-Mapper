@@ -9,6 +9,7 @@
     <DebugType>full</DebugType>
     <SignAssembly>False</SignAssembly>
     <StartupObject>KP_Port_Mapper.Program</StartupObject>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -17,7 +18,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Open.Nat" Version="2.1.0" />
+    <Content Include="icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mono.Nat" Version="3.0.4" />
   </ItemGroup>
 
 </Project>

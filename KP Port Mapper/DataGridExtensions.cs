@@ -1,4 +1,4 @@
-﻿using Open.Nat;
+﻿using Mono.Nat;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,11 +14,11 @@ using System.Windows.Forms;
 namespace KP_Port_Mapper;
 public static class DataGridMethods
 {
-    private static readonly string[] blackList = { "msedge.exe", "chrome.exe", "firefox.exe", "NVIDIA Share.exe", "steam.exe" };
+    private static readonly string[] blackList = { "msedge.exe", "chrome.exe", "firefox.exe", "NVIDIA Share.exe", "steam.exe", Path.GetFileName(Environment.ProcessPath) };
 
     private static readonly BindingSource openPorts = new() { DataSource = new List<IPDataObject>() };
     private static Task refresh = null;
-    internal static void GenerateRows(DataGridView dataGridPortsView, NatDevice device)
+    internal static void GenerateRows(DataGridView dataGridPortsView, INatDevice device)
     {
         if (refresh != null && !refresh.IsCompleted)
             return;
@@ -107,11 +107,11 @@ public static class DataGridMethods
     private static string GetExecutablePathAboveVista(int ProcessId)
     {
         IntPtr hprocess = NativeMethods.OpenProcess(0x00001000, false, ProcessId);
-        if (hprocess == IntPtr.Zero)
-            throw new Win32Exception(Marshal.GetLastWin32Error());
-
         try
         {
+            if (hprocess == IntPtr.Zero)
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+
             StringBuilder buffer = new(1024);
             int size = buffer.Capacity;
             if (NativeMethods.QueryFullProcessImageName(hprocess, 0, buffer, out size))
@@ -123,5 +123,21 @@ public static class DataGridMethods
         }
 
         throw new Win32Exception(Marshal.GetLastWin32Error());
+    }
+
+    internal static void ConfigureAndAlignColumns(DataGridView dataGridView, params (string DataPropertyName, string Name, int Width)[] columns)
+    {
+        dataGridView.Columns.AddRange(columns
+            .Select(column => new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = column.DataPropertyName,
+                Name = column.Name,
+                Width = column.Width,
+                AutoSizeMode = column.Width == 0 ? DataGridViewAutoSizeColumnMode.Fill : DataGridViewAutoSizeColumnMode.NotSet,
+                ReadOnly = true
+            })
+            .ToArray());
+
+        AlignColumns(dataGridView.Columns);
     }
 }

@@ -34,6 +34,7 @@ namespace KP_Port_Mapper
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormKPPortMapper));
             this.labelPublicIP = new System.Windows.Forms.Label();
             this.dataGridPortsView = new System.Windows.Forms.DataGridView();
             this.labelPrivateIP = new System.Windows.Forms.Label();
@@ -321,6 +322,7 @@ namespace KP_Port_Mapper
             this.Controls.Add(this.labelPublicIP);
             this.Font = new System.Drawing.Font("Consolas", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "FormKPPortMapper";
             this.Text = "KP Port Mapper";

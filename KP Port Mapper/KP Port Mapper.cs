@@ -1,4 +1,5 @@
-﻿using Open.Nat;
+﻿using Mono.Nat;
+using Mono.Nat.Logging;
 using System;
 using System.ComponentModel;
 using System.Drawing;
@@ -14,55 +15,70 @@ public partial class FormKPPortMapper : Form
 {
     public FormKPPortMapper()
     {
+        NatUtility.DeviceFound += DeviceFound;
+        NatUtility.StartDiscovery();
         SetStyle(ControlStyles.DoubleBuffer | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true);
         UpdateStyles();
         InitializeComponent();
     }
 
-    private readonly NatDiscoverer discoverer = new();
     private string extIP;
     private readonly string intIP = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToString();
-    private NatDevice device;
-    private async void Form1_Load(object sender, EventArgs e)
+    private INatDevice device;
+    private async void DeviceFound(object sender, DeviceEventArgs args)
     {
         try
         {
-            device = await discoverer.DiscoverDeviceAsync(PortMapper.Upnp, new CancellationTokenSource(10000));
+            if (args.Device.NatProtocol == NatProtocol.Upnp)
+                device = args.Device;
+            device ??= args.Device;
+
+            extIP = (await device.GetExternalIPAsync()).ToString();
+            labelPublicIP.Text = $"IP Address is: {extIP}";
         }
-        catch (NatDeviceNotFoundException ex)
+        finally
         {
-            MessageBox.Show(ex.Message);
+            if (device != null)
+                DataGridMethods.GenerateRows(dataGridPortsView, device);
         }
-        extIP = (await device.GetExternalIPAsync()).ToString();
-        dataGridPortsView.Columns.AddRange(new[] {
-            new DataGridViewTextBoxColumn { DataPropertyName = "Protocol", Name = "Type", Width = 42, ReadOnly = true },
-            new DataGridViewTextBoxColumn { DataPropertyName = "PrivatePort", Name = "Private", Width = 70, ReadOnly = true },
-            new DataGridViewTextBoxColumn { DataPropertyName = "PublicPort", Name = "Public", Width = 60, ReadOnly = true },
-            new DataGridViewTextBoxColumn { DataPropertyName = "Description", Name = "Description", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, ReadOnly = true }
-            });
-        DataGridMethods.AlignColumns(dataGridPortsView.Columns);
-        dataGridSuggestionView.Columns.AddRange(new[] {
-            new DataGridViewTextBoxColumn { DataPropertyName = "Port", Name = "Port", Width = 56, ReadOnly = true },
-            new DataGridViewTextBoxColumn { DataPropertyName = "Protocol", Name = "Type", Width = 42, ReadOnly = true },
-            new DataGridViewTextBoxColumn { DataPropertyName = "Process", Name = "Process", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, ReadOnly = true },
-            new DataGridViewTextBoxColumn { DataPropertyName = "Title", Name = "Title", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, ReadOnly = true }
-            });
-        DataGridMethods.AlignColumns(dataGridSuggestionView.Columns);
-        labelPublicIP.Text = $"IP Address is: {extIP}";
-        labelPublicIP.DoubleClick += (s, e) => { ShowNotif($"Copied IP {extIP} to clipboard.", 3000); Clipboard.SetText(extIP); };
+    }
+    private async void Form1_Load(object sender, EventArgs e)
+    {
+        DataGridMethods.ConfigureAndAlignColumns(dataGridPortsView,
+            ("Protocol", "Type", 42),
+            ("PrivatePort", "Private", 70),
+            ("PublicPort", "Public", 60),
+            ("Description", "Description", 0) // 0 for AutoSizeMode.Fill
+        );
+        DataGridMethods.ConfigureAndAlignColumns(dataGridSuggestionView,
+            ("Port", "Port", 56),
+            ("Protocol", "Type", 42),
+            ("Process", "Process", 0),
+            ("Title", "Title", 0)
+        );
+
+        labelPublicIP.DoubleClick += CopyIPFromLabel;
+
         labelPrivateIP.Text = $"Private IP: {intIP}";
-        labelPrivateIP.DoubleClick += (s, e) => { ShowNotif($"Copied IP {intIP} to clipboard.", 3000); Clipboard.SetText(intIP); };
+        labelPrivateIP.DoubleClick += CopyIPFromLabel;
+
         BackgroundWorker worker = new();
         worker.DoWork += async (s, e) =>
         {
             while (true)
             {
-                DataGridMethods.GenerateRows(dataGridPortsView, device);
                 DataGridMethods.GetSuggestedPorts(dataGridSuggestionView);
                 await Task.Delay(2500);
             }
         };
         worker.RunWorkerAsync();
+    }
+
+    private void CopyIPFromLabel(object sender, EventArgs e)
+    {
+        var ip = ((Label)sender) == labelPrivateIP ? intIP : extIP;
+        ShowNotif($"Copied IP {ip} to clipboard.", 3000);
+        Clipboard.SetText(ip);
     }
 
     private void DataGridPortsView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
@@ -127,14 +143,16 @@ public partial class FormKPPortMapper : Form
 
     private async void DataGridPortsView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
     {
+        if (device is null)
+            return;
         IPDataObject port = e.Row.DataBoundItem as IPDataObject;
         if (port.Protocol != "DYN")
         {
-            await device.DeletePortMapAsync(new Mapping(Enum.Parse<Protocol>(port.Protocol, true), port.PrivatePort, port.PublicPort, textBoxDescription.Text));
+            await device.DeletePortMapAsync(new Mapping(Enum.Parse<Protocol>(port.Protocol, true), port.PrivatePort, port.PublicPort, int.MaxValue, textBoxDescription.Text));
             return;
         }
-        await device.DeletePortMapAsync(new Mapping(Protocol.Tcp, port.PrivatePort, port.PublicPort, textBoxDescription.Text));
-        await device.DeletePortMapAsync(new Mapping(Protocol.Udp, port.PrivatePort, port.PublicPort, textBoxDescription.Text));
+        await device.DeletePortMapAsync(new Mapping(Protocol.Tcp, port.PrivatePort, port.PublicPort, int.MaxValue, textBoxDescription.Text));
+        await device.DeletePortMapAsync(new Mapping(Protocol.Udp, port.PrivatePort, port.PublicPort, int.MaxValue, textBoxDescription.Text));
     }
 
     private void Textbox_KeyDown(object sender, KeyEventArgs e)
@@ -212,6 +230,8 @@ public partial class FormKPPortMapper : Form
     }
     private async void ButtonOpenPort_Click(object sender, EventArgs e)
     {
+        if (device is null)
+            return;
         int startPort = Math.Min(int.Parse("0" + textboxPrivatePortMin.Text), int.Parse("0" + textboxPrivatePortMax.Text));
         if (startPort == 0)
             return;
@@ -230,17 +250,27 @@ public partial class FormKPPortMapper : Form
         {
             try
             {
-                if (checkBoxTCP.Checked)
+                for (var udp = 0; udp < 2; udp++)
                 {
-                    if (await device.GetSpecificMappingAsync(Protocol.Tcp, startPort + i) != null)
-                        ShowNotif($"Private TCP port: {startPublicPort + i} already mapped!", 3000, true);
-                    await device.CreatePortMapAsync(new Mapping(Protocol.Tcp, startPort + i, startPublicPort + i, int.MaxValue - 1, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
-                }
-                if (checkBoxUDP.Checked)
-                {
-                    if (await device.GetSpecificMappingAsync(Protocol.Udp, startPort + i) != null)
-                        ShowNotif($"Private UDP port: {startPublicPort + i} already mapped!", 3000, true);
-                    await device.CreatePortMapAsync(new Mapping(Protocol.Udp, startPort + i, startPublicPort + i, int.MaxValue - 1, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
+                    if (udp == 0 ? checkBoxTCP.Checked : checkBoxUDP.Checked)
+                    {
+                        Mapping returnedMap;
+                        var protocol = udp == 0 ? Protocol.Tcp : Protocol.Udp;
+                        try
+                        {
+                            await device.GetSpecificMappingAsync(protocol, startPort + i);
+                            ShowNotif($"Private {protocol.ToString().ToUpperInvariant()} port: {startPublicPort + i} already mapped!", 3000, true);
+                        }
+                        catch (MappingException)
+                        {
+                            returnedMap = await device.CreatePortMapAsync(new Mapping(protocol, startPort + i, startPublicPort + i, int.MaxValue - 1, textBoxDescription.Text != "" ? textBoxDescription.Text : " "));
+                            if (returnedMap.PrivatePort != startPort + i || returnedMap.PublicPort != startPublicPort + i)
+                            {
+                                await device.DeletePortMapAsync(returnedMap);
+                                throw new MappingException();
+                            }
+                        }
+                    }
                 }
             }
             catch
@@ -253,6 +283,8 @@ public partial class FormKPPortMapper : Form
 
     private void ButtonSuggestionRefresh_Click(object sender, EventArgs e)
     {
+        if (device is null)
+            return;
         DataGridMethods.GenerateRows(dataGridPortsView, device);
         DataGridMethods.GetSuggestedPorts(dataGridSuggestionView);
     }
