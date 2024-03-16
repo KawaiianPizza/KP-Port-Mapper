@@ -1,9 +1,4 @@
-﻿using System;
-using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Text;
-
-namespace KP_Port_Mapper
+﻿namespace KP_Port_Mapper
 {
     public class NativeMethods
     {

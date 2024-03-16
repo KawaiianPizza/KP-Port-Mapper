@@ -1,14 +1,5 @@
 ﻿using KP_Port_Mapper.Helpers;
 using Mono.Nat;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace KP_Port_Mapper;
 public partial class FormKPPortMapper : Form

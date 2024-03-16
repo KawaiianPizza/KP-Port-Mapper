@@ -1,6 +1,3 @@
-using System;
-using System.Windows.Forms;
-
 namespace KP_Port_Mapper;
 internal static class Program
 {

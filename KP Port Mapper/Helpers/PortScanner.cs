@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
-
-namespace KP_Port_Mapper;
+﻿namespace KP_Port_Mapper;
 
 internal static partial class PortScanner
 {
