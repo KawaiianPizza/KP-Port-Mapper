@@ -1,4 +1,4 @@
-﻿using KP_Port_Mapper;
+﻿using KP_Port_Mapper.Helpers;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -18,6 +18,6 @@ internal static class FormKPPortMapperHelpers
             })
             .ToArray());
 
-        DataGridMethods.AlignColumns(dataGridView.Columns);
+        DataGridExtensions.AlignColumns(dataGridView.Columns);
     }
 }
